@@ -1,5 +1,4 @@
 #include <Servo.h>
-#include <DHT.h>
 
 // Sinais de controle do motor e sensor de agua
 #define SERVO_PIN 7
@@ -8,14 +7,15 @@
 // Sinais para outros grupos
 #define FILL 5
 #define LID 3
-const unsigned long waterDelay = 7*1000; // 70 segundos
+#define FILLDONE 8
+const unsigned long waterDelay = 25*1000; // 7 segundos
 
 Servo s;
 int pos;
 /* Change these values based on your calibration values */
-int lowerThreshold = 235;
-int upperThreshold = 260;
-int idealThreshold = 120;
+int idealThreshold = 50;
+
+int counterWater = 0;
 
 int readWaterLevel() {
   int level = analogRead(WATER_PIN);
@@ -36,20 +36,15 @@ void throwWater(bool maxWater, bool lid) {
   if(lid && maxWater){
       Serial.println("Liberando fluxo de agua");
       // Libera o fluxo de agua
-      for(pos = 0; pos < 90; pos++){
-        s.write(pos);
-        delay(15);
-      }
+      s.write(90);
       Serial.println("Evacoando...");
       // Tempo para vasao de agua
+      counterWater++;
       delay(waterDelay);
       Serial.println("Bloqueando fluxo de agua");
       // Bloqueia o fluxo de agua
-      for(pos = 90; pos > 0; pos--){
-        s.write(pos);
-        delay(15);
-      }
-      delay(waterDelay);
+      s.write(0);
+      //delay(waterDelay);
       
   }
 }
@@ -77,10 +72,10 @@ bool checkWater(){
 void setup() {
     Serial.begin(9600);
     s.attach(SERVO_PIN);
-    s.write(90); // Começa o programa com o fluxo de agua bloqueado
-    dht.begin();
+    s.write(0); // Começa o programa com o fluxo de agua bloqueado
     pinMode(FILL, OUTPUT);
     pinMode(LID, INPUT);
+    pinMode(FILLDONE, OUTPUT);
 }
 
 void loop() {
@@ -90,8 +85,17 @@ void loop() {
     fillBottle(maxWater);
     // Verifica se a tampa esta aberta
     bool lid = openLid();
+    lid = true;
     // Verifica se pode despejar a agua
-    throwWater(maxWater, lid);
+    throwWater(lid, maxWater);
+    
+    if (counterWater >= 2){
+      digitalWrite(FILLDONE, HIGH);
+      counterWater = 0;
+      fillBottle(true);
+    }else{
+      digitalWrite(FILLDONE, LOW);
+    }
 
     delay(100);
 }
