@@ -5,16 +5,14 @@
 #define WATER_PIN A0
 
 // Sinais para outros grupos
-#define FILL 5
-#define LID 3
-#define FILLDONE 8
-const unsigned long waterDelay = 25*1000; // 7 segundos
+#define FILL 5      // Grupo da bomba de água 
+#define LID 3       // Grupo que abre e fecha a tampa
+#define FILLDONE 8  // Avisar que terminou de encher a água
+const unsigned long waterDelay = 25*1000; // 25 segundos
 
 Servo s;
 int pos;
-/* Change these values based on your calibration values */
 int idealThreshold = 50;
-
 int counterWater = 0;
 
 int readWaterLevel() {
@@ -57,9 +55,9 @@ bool openLid() {
 // Avisa para a outra equipe se precisa encher ou não
 void fillBottle(bool maxWater){
     if(maxWater){
-      digitalWrite(FILL, HIGH); // Nível de água máximo, não precisa encher
+      digitalWrite(FILL, LOW); // Avisa que não precisa encher
     }else{
-      digitalWrite(FILL, LOW);  // Abaixo do nível desejado, precisa encher
+      digitalWrite(FILL, HIGH);  // Avisa que precisa encher
     }
 }
 
@@ -79,6 +77,13 @@ void setup() {
 }
 
 void loop() {
+  fillBottle(false);
+  Serial.println("Abrir porta");
+  delay(10000);
+  fillBottle(true);
+  Serial.println("Fechar porta");
+  delay(10000);
+  /*
     // Lê informação do nivel de agua
     bool maxWater = checkWater();    
     // Verifica se pode encher a garrafa ou não
@@ -92,10 +97,10 @@ void loop() {
     if (counterWater >= 2){
       digitalWrite(FILLDONE, HIGH);
       counterWater = 0;
-      fillBottle(true);
+      fillBottle(maxWater);
     }else{
       digitalWrite(FILLDONE, LOW);
     }
-
     delay(100);
+    */
 }
